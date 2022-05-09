@@ -1,0 +1,54 @@
+# Prerequisites
+*.d
+
+# Object files
+*.obj
+*.lo
+*.o
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Static libraries
+*.lib
+*.la
+*.a
+
+# Compiled Dynamic libraries
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.elf
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Visual Studio Code
+.vscode
+.cache
+
+# CMake
+install*
+build*
+
+# Doxygen
+latex
+html

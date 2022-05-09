@@ -1,0 +1,33 @@
+name: doxygen
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+jobs:
+  doxygen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          lfs: true
+          submodules: true
+      - name: Run apt-get
+        run: |
+          set -x
+          sudo apt-get -y update
+          sudo apt-get -y install doxygen graphviz mscgen dia
+      - name: Run doxygen
+        run: |
+          set -x
+          cmake -S . -B build
+          cmake --build build --target timeslice-doc
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          commit_message: ${{ github.event.head_commit.message }}
+          disable_nojekyll: true
+          publish_branch: gh-pages
+          force_orphan: true
+          publish_dir: build/html

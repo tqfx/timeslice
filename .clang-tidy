@@ -1,0 +1,4 @@
+---
+Checks: '-*,clang-diagnostic-*,llvm-*,misc-*,-llvm-include-order'
+FormatStyle: file
+...
