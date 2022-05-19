@@ -12,7 +12,10 @@ find_program(CPPCHECK cppcheck)
 find_program(CPPLINT cpplint)
 include(cmake/core.cmake)
 
-project(timeslice VERSION 0.1.0 LANGUAGES C DESCRIPTION "A timeslice library based on C language." HOMEPAGE_URL "https://github.com/tqfx/timeslice.git")
+project(timeslice VERSION 0.1.0 LANGUAGES C
+  DESCRIPTION "A timeslice library based on C language."
+  HOMEPAGE_URL "https://github.com/tqfx/timeslice.git"
+  )
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Specifies the build type on single-configuration generators." FORCE)
@@ -26,6 +29,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
 endif()
 include(cmake/standard.cmake)
 
+option(ENABLE_DOXYGEN "Enable doxygen" ON)
 option(ENABLE_WARNINGS "Enable warnings" OFF)
 option(ENABLE_SANITIZE "Enable sanitize" OFF)
 option(ENABLE_CPPCHECK "Enable cppcheck" OFF)
@@ -33,6 +37,9 @@ option(ENABLE_CLANG_TIDY "Enable clang-tidy" OFF)
 option(ENABLE_IYWU "Enable include-what-you-use" OFF)
 option(ENABLE_IPO "Enable interprocedural optimization" OFF)
 
+if(ENABLE_DOXYGEN)
+  find_package(Doxygen OPTIONAL_COMPONENTS dot mscgen dia)
+endif()
 if(ENABLE_WARNINGS)
   include(cmake/warnings.cmake)
 endif()
@@ -44,11 +51,9 @@ if(ENABLE_IPO)
   check_ipo_supported(RESULT ENABLE_IPO)
 endif()
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+file(GLOB_RECURSE SOURCES include/*.h src/*.h src/*.c)
 
-file(GLOB_RECURSE SOURCE src/*.*)
-file(GLOB_RECURSE HEADER include/*.*)
-add_library(${PROJECT_NAME} ${SOURCE} ${HEADER})
+add_library(${PROJECT_NAME} ${SOURCES})
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES C_VISIBILITY_PRESET hidden)
@@ -80,32 +85,64 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
   add_subdirectory(tests)
 endif()
 
-if(CLANG_FORMAT)
-  file(GLOB_RECURSE SOURCE include/*.h src/*.[ch] tests/*.[ch]*)
-  # https://clang.llvm.org/docs/ClangFormat.html
-  add_custom_target(${PROJECT_NAME}-format
-    COMMAND ${CLANG_FORMAT} -style=file -i ${SOURCE} --verbose
-    )
-endif()
-
-install(TARGETS ${PROJECT_NAME}
-  EXPORT ${PROJECT_NAME}-target
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-  )
-install(EXPORT ${PROJECT_NAME}-target
-  FILE ${PROJECT_NAME}-config.cmake
-  NAMESPACE ${PROJECT_NAME}::
-  DESTINATION lib/cmake/${PROJECT_NAME}
-  )
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/
   DESTINATION include FILES_MATCHING
   REGEX ".*\.\(h\|hh\|hxx\|hpp\)$"
   )
+install(TARGETS ${PROJECT_NAME}
+  EXPORT ${PROJECT_NAME}-targets
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  )
+install(EXPORT ${PROJECT_NAME}-targets
+  FILE ${PROJECT_NAME}-targets.cmake
+  NAMESPACE ${PROJECT_NAME}::
+  DESTINATION lib/cmake/${PROJECT_NAME}
+  )
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
+  DESTINATION lib/cmake/${PROJECT_NAME}
+  )
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
+  COMPATIBILITY AnyNewerVersion
+)
+configure_package_config_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
+  INSTALL_DESTINATION lib/cmake/${PROJECT_NAME}
+  )
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc
+  @ONLY
+  )
 
-# https://www.doxygen.nl/manual/config.html
-find_package(Doxygen OPTIONAL_COMPONENTS dot mscgen dia)
+include(InstallRequiredSystemLibraries)
+set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_LIST_DIR}/LICENSE.txt)
+set(CPACK_RESOURCE_FILE_README ${CMAKE_CURRENT_LIST_DIR}/README.md)
+set(CPACK_SOURCE_IGNORE_FILES
+  ${CMAKE_CURRENT_LIST_DIR}/.git
+  ${CMAKE_CURRENT_LIST_DIR}/.vscode
+  ${CMAKE_CURRENT_LIST_DIR}/.github
+  ${CMAKE_CURRENT_LIST_DIR}/.gitignore
+  ${CMAKE_CURRENT_LIST_DIR}/.gitmodules
+  ${CMAKE_CURRENT_LIST_DIR}/.gitattributes
+  ${CMAKE_CURRENT_LIST_DIR}/build
+  ${CMAKE_CURRENT_LIST_DIR}/html
+  )
+include(CPack)
+
+if(CLANG_FORMAT)
+  file(GLOB_RECURSE SOURCES include/*.h src/*.[ch] tests/*.[ch]*)
+  # https://clang.llvm.org/docs/ClangFormat.html
+  add_custom_target(${PROJECT_NAME}-format
+    COMMAND ${CLANG_FORMAT} --style=file -i ${SOURCES} --verbose
+    )
+endif()
 if(DOXYGEN_FOUND)
   # Project related configuration options
   set(DOXYGEN_OPTIMIZE_OUTPUT_FOR_C YES)
@@ -142,24 +179,10 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_INTERACTIVE_SVG YES)
     set(DOXYGEN_DOT_IMAGE_FORMAT svg)
   endif()
+  # https://www.doxygen.nl/manual/config.html
   doxygen_add_docs(${PROJECT_NAME}-doc
     ${CMAKE_CURRENT_LIST_DIR}/README.md
     ${CMAKE_CURRENT_LIST_DIR}/include
     ${CMAKE_CURRENT_LIST_DIR}/src
     )
 endif()
-
-include(InstallRequiredSystemLibraries)
-set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_LIST_DIR}/LICENSE.txt)
-set(CPACK_RESOURCE_FILE_README ${CMAKE_CURRENT_LIST_DIR}/README.md)
-set(CPACK_SOURCE_IGNORE_FILES
-  ${CMAKE_CURRENT_LIST_DIR}/.git
-  ${CMAKE_CURRENT_LIST_DIR}/.vscode
-  ${CMAKE_CURRENT_LIST_DIR}/.github
-  ${CMAKE_CURRENT_LIST_DIR}/.gitignore
-  ${CMAKE_CURRENT_LIST_DIR}/.gitmodules
-  ${CMAKE_CURRENT_LIST_DIR}/.gitattributes
-  ${CMAKE_CURRENT_LIST_DIR}/build
-  ${CMAKE_CURRENT_LIST_DIR}/html
-  )
-include(CPack)

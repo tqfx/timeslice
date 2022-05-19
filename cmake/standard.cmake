@@ -30,3 +30,5 @@ endif()
 if(NOT CMAKE_CXX_STANDARD_REQUIRED)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
+# export compile commands
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
