@@ -1,0 +1,5 @@
+<map id="list_del" name="list_del">
+<area shape="rect" id="node1" title="Delete a node from a list." alt="" coords="5,31,75,57"/>
+<area shape="rect" id="node2" href="$list_8h.html#a7676e0744c4627832d5a7fe22b274e87" title="initialize for circular doubly linked list" alt="" coords="124,5,195,32"/>
+<area shape="rect" id="node3" href="$list_8h.html#abe9970acb0538b5d910186545e29144f" title="Link head node and tail node node." alt="" coords="123,56,196,83"/>
+</map>
