@@ -13,7 +13,7 @@ find_program(CPPLINT cpplint)
 include(cmake/core.cmake)
 
 project(timeslice VERSION 0.1.0 LANGUAGES C
-  DESCRIPTION "A timeslice library based on C language."
+  DESCRIPTION "A timeslice library based on C language"
   HOMEPAGE_URL "https://github.com/tqfx/timeslice.git"
   )
 
